@@ -104,23 +104,22 @@ Join CovidProject..CovidVaccinations vac
 where dea.continent is not null 
 order by 2,3
 
--- Use CTE
+-- Using CTE to perform Calculation on Partition By in previous query
 
 With PopVsVac (Continent, Location, Date, Population, New_Vaccinations, RollingPeopleVaccinated)
 as
 (
-Select dea.continent, dea.location, dea.date, dea.population, vac.new_vaccinations, sum(convert(int,vac.new_vaccinations)) OVER (Partition by dea.location order by dea.location, dea.date) as RollingPeopleVaccinated
- -- (RollingPeopleVaccinated/population)*100
+Select dea.continent, dea.location, dea.date, dea.population, vac.new_vaccinations, sum(cast(vac.new_vaccinations as bigint)) OVER (Partition by dea.location order by dea.location, dea.date) as RollingPeopleVaccinated
  From ProjectPortfolio..CovidDeaths dea
  Join ProjectPortfolio..CovidVaccinations vac
  on dea.location = vac.location
  and dea.date = vac.date
 where dea.continent is not null
 )
-Select * , (RollingPeopleVaccinated/Population)*100
+Select * , (RollingPeopleVaccinated/Population)*100 as Vaccination_Percentage
 from PopVsVac
 
--- TEMP TABLE
+-- Using Temp Table to perform Calculation on Partition By in previous query
 
 DROP table if exists #PercentPopulationVaccinated
 Create table #PercentPopulationVaccinated
@@ -134,15 +133,13 @@ RollingPeopleVaccinated numeric
 )
 
 Insert into #PercentPopulationVaccinated
-Select dea.continent, dea.location, dea.date, dea.population, vac.new_vaccinations, sum(convert(int,vac.new_vaccinations)) OVER (Partition by dea.location order by dea.location, dea.date) as RollingPeopleVaccinated
- -- (RollingPeopleVaccinated/population)*100
+Select dea.continent, dea.location, dea.date, dea.population, vac.new_vaccinations, sum(cast(vac.new_vaccinations as bigint)) OVER (Partition by dea.location order by dea.location, dea.date) as RollingPeopleVaccinated
  From ProjectPortfolio..CovidDeaths dea
  Join ProjectPortfolio..CovidVaccinations vac
  on dea.location = vac.location
  and dea.date = vac.date
--- where dea.continent is not null
 
-Select * , (RollingPeopleVaccinated/Population)*100
+Select * , (RollingPeopleVaccinated/Population)*100 as Vaccination_Percentage
 from #PercentPopulationVaccinated
 
 
